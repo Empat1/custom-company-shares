@@ -1,47 +1,44 @@
 package com.example.customompanyshares
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.customompanyshares.ui.theme.CustomСompanySharesTheme
+import androidx.compose.runtime.collectAsState
+import com.example.customompanyshares.presentation.SharedPainter
+import com.example.customompanyshares.presentation.SharesState
+import com.example.customompanyshares.presentation.SharesViewModel
 
 class MainActivity : ComponentActivity() {
+
+    val sharesViewModel : SharesViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
-            CustomСompanySharesTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            ObserveState()
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CustomСompanySharesTheme {
-        Greeting("Android")
+    @Composable
+    private fun ObserveState(){
+
+        val screenState = sharesViewModel.state.collectAsState()
+
+        when(val currentState = screenState.value){
+            is SharesState.Initial -> {
+
+            }
+            is SharesState.Content -> {
+                SharedPainter(currentState.barList)
+            }
+            is SharesState.Error -> {
+                Log.e("MainActivity", "error = ${currentState.exception.message}", currentState.exception)
+            }
+        }
     }
 }
