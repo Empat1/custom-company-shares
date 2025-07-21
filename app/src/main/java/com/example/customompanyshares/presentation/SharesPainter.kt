@@ -1,14 +1,15 @@
 package com.example.customompanyshares.presentation
 
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.TransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Modifier
@@ -27,19 +28,37 @@ fun SharedPainter(bars: List<Bar>){
         mutableIntStateOf(25)
     }
 
-    var scrollState by remember {
-        mutableIntStateOf(100)
+    var scrollBy by remember {
+        mutableFloatStateOf(0f)
+    }
+
+    var terminalWidth by remember {
+        mutableFloatStateOf(0f)
+    }
+
+    val barWidth by remember {
+        derivedStateOf {
+            terminalWidth / visibilityBarsCount
+        }
+    }
+
+    val visibilityBar by remember {
+        derivedStateOf {
+            val startIndex = (scrollBy / barWidth).roundToInt().coerceAtLeast(0)
+            val endIndex = (startIndex + visibilityBarsCount).coerceAtMost(bars.size)
+
+            bars.subList(startIndex, endIndex)
+        }
     }
 
     val transformState = TransformableState{ zoomChange, panChange, rotationChange ->
         visibilityBarsCount = (visibilityBarsCount / zoomChange).roundToInt()
             .coerceIn(MIN_COUNT_BARS, bars.size)
 
-        scrollState = panChange.x.roundToInt()
+        scrollBy = (scrollBy + panChange.x)
+            .coerceAtLeast(0f)
+            .coerceAtMost(bars.size * barWidth - terminalWidth)
     }
-
-
-    val takeBars = bars.take(visibilityBarsCount)
 
     Canvas(
         modifier = Modifier
@@ -48,21 +67,25 @@ fun SharedPainter(bars: List<Bar>){
             .transformable(transformState)
     ){
 
-        val max = takeBars.maxOf { it.high }
-        val min = takeBars.minOf { it.low }
 
-        val barWidth = size.width / takeBars.size
+
+        terminalWidth = size.width
+        val max = visibilityBar.maxOf { it.high }
+        val min = visibilityBar.minOf { it.low }
+
         val barHeight = size.height / (max - min)
 
-        takeBars.forEachIndexed { index, bar ->
-            val offsetX = barWidth * index
+        translate(left = scrollBy) {
+            bars.forEachIndexed { index, bar ->
+                val offsetX = size.width - barWidth * index
 
-            drawLine(
-                color = bar.getColor(),
-                start = Offset(offsetX,size.height - ((bar.low - min) * barHeight)),
-                end = Offset(offsetX, size.height - ((bar.high - min) * barHeight)),
-                strokeWidth = barWidth / 2
-            )
+                drawLine(
+                    color = bar.getColor(),
+                    start = Offset(offsetX, size.height - ((bar.low - min) * barHeight)),
+                    end = Offset(offsetX, size.height - ((bar.high - min) * barHeight)),
+                    strokeWidth = barWidth / 2
+                )
+            }
         }
     }
 }
