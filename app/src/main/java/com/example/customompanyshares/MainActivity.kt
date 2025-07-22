@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import com.example.customompanyshares.presentation.SharedPainter
 import com.example.customompanyshares.presentation.SharesState
 import com.example.customompanyshares.presentation.SharesViewModel
+import com.example.customompanyshares.presentation.TestSaver
 
 class MainActivity : ComponentActivity() {
 
@@ -21,11 +22,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             ObserveState()
         }
+
+
     }
 
 
     @Composable
     private fun ObserveState(){
+
+        TestSaver()
+        return
 
         val screenState = sharesViewModel.state.collectAsState()
 
