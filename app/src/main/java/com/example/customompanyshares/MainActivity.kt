@@ -29,10 +29,6 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ObserveState(){
-
-        TestSaver()
-        return
-
         val screenState = sharesViewModel.state.collectAsState()
 
         when(val currentState = screenState.value){
